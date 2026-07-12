@@ -1,0 +1,2924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>抽牌模拟器 · 手机版</title>
+    <style>
+        /* ---------- 全局重置 ---------- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, -apple-system, sans-serif;
+        }
+        html,
+        body {
+            background: #f0f4f8;
+            min-height: 100vh;
+            padding: 12px;
+            touch-action: manipulation;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            padding: 16px 16px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ---------- 顶部标题 ---------- */
+        .app-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e9edf2;
+        }
+        .app-header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+        }
+        .app-header h1 small {
+            font-size: 13px;
+            font-weight: 400;
+            color: #94a3b8;
+        }
+        .app-header .theme-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #475569;
+        }
+        .app-header .theme-controls input[type="color"] {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #d1d9e6;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+        .app-header .theme-controls input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .app-header .theme-controls input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+
+        /* ---------- 布局控制栏 (移动简化) ---------- */
+        .layout-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            padding: 6px 0;
+        }
+        .layout-bar .btn {
+            padding: 4px 14px;
+            border: 1px solid #d1d9e6;
+            border-radius: 30px;
+            background: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            color: #1e293b;
+            touch-action: manipulation;
+        }
+        .layout-bar .btn:active {
+            background: #eef2f6;
+        }
+        .layout-bar select {
+            padding: 4px 10px;
+            border: 1px solid #d1d9e6;
+            border-radius: 30px;
+            font-size: 12px;
+            background: #fff;
+            outline: none;
+            max-width: 140px;
+        }
+        .layout-bar .spacer {
+            flex: 1;
+        }
+        .layout-bar .hint {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        /* ---------- 组件网格 (单列) ---------- */
+        .components-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .components-grid .card {
+            background: #f8fafc;
+            border-radius: 16px;
+            border: 1px solid #e9edf2;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            transition: border-color 0.3s;
+            overflow: hidden;
+        }
+        .components-grid .card.hidden {
+            display: none;
+        }
+        .components-grid .card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px 10px;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s;
+            min-height: 48px;
+        }
+        .components-grid .card .card-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+        }
+        .components-grid .card .card-header h2 .badge {
+            background: #dbeafe;
+            color: #1e4a7a;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 0 10px;
+            border-radius: 30px;
+            line-height: 22px;
+            margin-left: auto;
+        }
+        .components-grid .card .card-header .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .components-grid .card .card-header .header-actions button {
+            background: none;
+            border: none;
+            font-size: 15px;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 2px 6px;
+            line-height: 1;
+            border-radius: 4px;
+            touch-action: manipulation;
+        }
+        .components-grid .card .card-header .header-actions button:active {
+            background: #e2e8f0;
+        }
+        .components-grid .card .card-header .collapse-btn {
+            font-size: 16px;
+            color: #94a3b8;
+            transition: transform 0.3s;
+        }
+        .components-grid .card .card-header .collapse-btn.collapsed {
+            transform: rotate(-90deg);
+        }
+        .components-grid .card .card-body {
+            padding: 0 16px 18px;
+            transition: max-height 0.35s ease, padding 0.35s ease;
+            max-height: 3000px;
+            overflow: hidden;
+        }
+        .components-grid .card .card-body.collapsed {
+            max-height: 0;
+            padding: 0 16px;
+        }
+        .components-grid .card.theme-accent {
+            border-color: var(--accent-color, #3b82f6);
+        }
+        .components-grid .card.theme-accent .card-header {
+            border-bottom-color: var(--accent-color, #3b82f6);
+        }
+        .components-grid .card.theme-accent .badge {
+            background: var(--accent-color, #3b82f6);
+            color: #fff;
+        }
+        .btn-primary {
+            background: var(--accent-color, #3b82f6) !important;
+            color: #fff !important;
+        }
+        .btn-primary:active {
+            filter: brightness(0.9);
+        }
+        .btn-primary:disabled {
+            opacity: 0.4 !important;
+            filter: none !important;
+            cursor: not-allowed;
+        }
+
+        /* ---------- 牌库管理 (移动适配) ---------- */
+        .library-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 8px;
+            margin-bottom: 10px;
+        }
+        .library-controls input,
+        .library-controls textarea {
+            padding: 8px 12px;
+            border: 1px solid #d1d9e6;
+            border-radius: 30px;
+            font-size: 14px;
+            background: #fff;
+            outline: none;
+            transition: 0.2s;
+            width: 100%;
+        }
+        .library-controls input:focus,
+        .library-controls textarea:focus {
+            border-color: var(--accent-color, #3b82f6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+        .library-controls input[type="text"] {
+            flex: 2 1 120px;
+            min-width: 80px;
+        }
+        .library-controls input[type="number"] {
+            max-width: 70px;
+            flex: 0 1 60px;
+        }
+        .library-controls input[type="text"][id="card-image"] {
+            flex: 2 1 140px;
+            min-width: 100px;
+        }
+        .library-controls textarea {
+            flex: 1 1 100%;
+            min-height: 38px;
+            resize: vertical;
+            border-radius: 16px;
+            font-size: 13px;
+        }
+        .library-controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 13px;
+            background: #eef2f6;
+            color: #1e293b;
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+            touch-action: manipulation;
+        }
+        .library-controls button:active {
+            background: #dce3ec;
+        }
+        .library-controls button.primary {
+            background: var(--accent-color, #3b82f6);
+            color: white;
+        }
+        .library-controls button.primary:active {
+            filter: brightness(0.9);
+        }
+        .library-controls button.danger {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .library-controls button.danger:active {
+            background: #fecaca;
+        }
+        .library-controls button.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .library-controls button.success:active {
+            background: #a7f3d0;
+        }
+        .library-controls .file-btn {
+            background: #e0e7ff;
+            color: #3730a3;
+            position: relative;
+            overflow: hidden;
+        }
+        .library-controls .file-btn:active {
+            background: #c7d2fe;
+        }
+        .library-controls .file-btn input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .preset-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .preset-btns button {
+            padding: 4px 12px;
+            border-radius: 30px;
+            border: 1px solid #d1d9e6;
+            background: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .preset-btns button:active {
+            background: #eef2f6;
+        }
+
+        .library-list {
+            max-height: 180px;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            font-size: 14px;
+        }
+        .library-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 12px;
+            border-bottom: 1px solid #f0f2f5;
+            gap: 6px;
+        }
+        .library-item:last-child {
+            border-bottom: none;
+        }
+        .library-item .info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .library-item .info .card-preview {
+            width: 24px;
+            height: 34px;
+            border-radius: 4px;
+            object-fit: cover;
+            border: 1px solid #d1d9e6;
+            background: #fff;
+            flex-shrink: 0;
+        }
+        .library-item .info .name {
+            font-weight: 500;
+            color: #0f172a;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .library-item .info .desc-preview {
+            font-size: 11px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px;
+            background: #f1f5f9;
+            padding: 0 6px;
+            border-radius: 10px;
+            line-height: 20px;
+        }
+        .library-item .count {
+            color: #475569;
+            background: #f1f5f9;
+            padding: 0 10px;
+            border-radius: 30px;
+            font-size: 12px;
+            line-height: 24px;
+            flex-shrink: 0;
+        }
+        .library-item .actions {
+            display: flex;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .library-item .actions button {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 15px;
+            line-height: 1;
+            padding: 0 4px;
+            touch-action: manipulation;
+        }
+        .library-item .actions button:active {
+            color: #3b82f6;
+        }
+        .library-item .actions button.del-btn:active {
+            color: #dc2626;
+        }
+        .empty-lib {
+            text-align: center;
+            color: #94a3b8;
+            padding: 20px 0;
+            font-size: 13px;
+        }
+        .total-count {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #475569;
+            text-align: right;
+        }
+
+        .io-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+        .io-buttons button {
+            padding: 5px 16px;
+            border: 1px solid #d1d9e6;
+            border-radius: 30px;
+            background: #fff;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            color: #1e293b;
+            touch-action: manipulation;
+        }
+        .io-buttons button:active {
+            background: #f1f5f9;
+        }
+        .io-buttons button.export-btn {
+            background: #dbeafe;
+            border-color: #93b4e8;
+        }
+        .io-buttons button.import-btn {
+            background: #e0f2fe;
+            border-color: #7fc0e8;
+        }
+        .io-buttons .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .io-buttons .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* ---------- 抽牌控制 ---------- */
+        .draw-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+            margin-bottom: 12px;
+        }
+        .draw-controls label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: #1e293b;
+        }
+        .draw-controls input[type="number"] {
+            width: 56px;
+            padding: 6px 8px;
+            border: 1px solid #d1d9e6;
+            border-radius: 30px;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+        }
+        .draw-controls input[type="number"]:focus {
+            border-color: var(--accent-color, #3b82f6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+        .draw-controls select {
+            padding: 6px 10px;
+            border: 1px solid #d1d9e6;
+            border-radius: 30px;
+            font-size: 13px;
+            background: #fff;
+            outline: none;
+        }
+        .draw-controls select:focus {
+            border-color: var(--accent-color, #3b82f6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+        .draw-controls button {
+            padding: 6px 18px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            background: var(--accent-color, #3b82f6);
+            color: white;
+            cursor: pointer;
+            transition: 0.15s;
+            touch-action: manipulation;
+            min-height: 38px;
+        }
+        .draw-controls button:active {
+            filter: brightness(0.9);
+        }
+        .draw-controls button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: none;
+        }
+        .draw-controls button.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .draw-controls button.success:active {
+            background: #a7f3d0;
+        }
+
+        .draw-result {
+            font-size: 14px;
+            color: #0f172a;
+            background: #f1f5f9;
+            padding: 10px 14px;
+            border-radius: 14px;
+            min-height: 100px;
+            display: flex;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            flex: 1;
+            border: 1px dashed #d1d9e6;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .draw-result .remaining-indicator {
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.70);
+            backdrop-filter: blur(4px);
+            color: #f1f5f9;
+            padding: 1px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 10;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .draw-result .remaining-indicator .num {
+            color: #facc15;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .draw-result .remaining-indicator.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .draw-result .remaining-indicator .num.zero {
+            color: #ef4444;
+        }
+
+        /* 牌堆 (移动缩小) */
+        .draw-result .deck-stack {
+            position: relative;
+            flex-shrink: 0;
+            width: 52px;
+            height: 74px;
+            margin-right: 4px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .draw-result .deck-stack .stack-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border: 2px solid #d1d9e6;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+        .draw-result .deck-stack .stack-card:nth-child(1) {
+            transform: rotate(-4deg) translate(-2px, -2px);
+            background: #fafafa;
+            border-color: #c8c8c8;
+        }
+        .draw-result .deck-stack .stack-card:nth-child(2) {
+            transform: rotate(2deg) translate(2px, -1px);
+            background: #fcfcfc;
+            border-color: #d0d0d0;
+        }
+        .draw-result .deck-stack .stack-card:nth-child(3) {
+            transform: rotate(-1deg) translate(-1px, 1px);
+            background: #ffffff;
+            border-color: #d8d8d8;
+        }
+        .draw-result .deck-stack .stack-card:nth-child(4) {
+            transform: rotate(3deg) translate(1px, 2px);
+            background: #fefefe;
+            border-color: #d1d9e6;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.10);
+        }
+        .draw-result .deck-stack .stack-card .card-back-pattern {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            background: repeating-linear-gradient(45deg,
+                    rgba(200, 200, 200, 0.15) 0px,
+                    rgba(200, 200, 200, 0.15) 6px,
+                    rgba(180, 180, 180, 0.10) 6px,
+                    rgba(180, 180, 180, 0.10) 12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #94a3b8;
+            opacity: 0.5;
+        }
+
+        .draw-result .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 卡牌 (移动放大) */
+        .draw-result .card-chip {
+            position: relative;
+            background: #fff;
+            border: 2px solid #d1d9e6;
+            border-radius: 6px;
+            padding: 2px;
+            width: 58px;
+            height: 82px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            overflow: visible;
+            flex-shrink: 0;
+            opacity: 0;
+            cursor: pointer;
+            transition: opacity var(--anim-speed, 0.35s) ease,
+                transform var(--anim-speed, 0.35s) ease,
+                box-shadow 0.2s ease;
+            will-change: transform;
+            transform: scale(0.85) rotate(0deg);
+            z-index: 5;
+            touch-action: manipulation;
+        }
+        .draw-result .card-chip img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+        .draw-result .card-chip.text-chip {
+            font-weight: 600;
+            color: #0f172a;
+            background: linear-gradient(145deg, #ffffff, #f8f8f8);
+            padding: 3px 4px;
+            text-align: center;
+            line-height: 1.2;
+            word-break: break-word;
+            flex-direction: column;
+            overflow: hidden;
+            max-width: 100%;
+            max-height: 100%;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .draw-result .card-chip.text-chip .card-name-text {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            word-break: break-word;
+        }
+
+        /* 飞入 */
+        .draw-result .card-chip.flying {
+            transition: transform 0.5s cubic-bezier(0.34, 1.2, 0.64, 1),
+                opacity 0.4s ease,
+                box-shadow 0.3s ease;
+            opacity: 0;
+            transform: scale(0.7) rotate(var(--start-rot, 0deg));
+            z-index: 10;
+        }
+        .draw-result .card-chip.flying.landed {
+            opacity: 1;
+            transform: scale(1) rotate(0deg) translate(0, 0);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.10);
+            z-index: 5;
+        }
+
+        .draw-result .card-chip:active {
+            transform: scale(0.95) !important;
+        }
+
+        /* 入场动画 */
+        .draw-result .card-chip.anim-fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity var(--anim-speed, 0.35s) ease,
+                transform var(--anim-speed, 0.35s) ease,
+                box-shadow 0.2s ease;
+            z-index: 5;
+        }
+        .draw-result .card-chip.anim-fade-in.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .draw-result .card-chip.anim-bounce {
+            opacity: 0;
+            transform: translateY(30px) scale(0.8);
+            transition: opacity calc(var(--anim-speed, 0.35s) + 0.05s) cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform calc(var(--anim-speed, 0.35s) + 0.05s) cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.2s ease;
+            z-index: 5;
+        }
+        .draw-result .card-chip.anim-bounce.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        .draw-result .card-chip.anim-flip {
+            opacity: 0;
+            transform: perspective(400px) rotateY(90deg) scale(0.9);
+            transition: opacity calc(var(--anim-speed, 0.35s) + 0.05s) ease,
+                transform calc(var(--anim-speed, 0.35s) + 0.05s) ease,
+                box-shadow 0.2s ease;
+            z-index: 5;
+        }
+        .draw-result .card-chip.anim-flip.show {
+            opacity: 1;
+            transform: perspective(400px) rotateY(0deg) scale(1);
+        }
+        .draw-result .card-chip.anim-scale {
+            opacity: 0;
+            transform: scale(0.2);
+            transition: opacity var(--anim-speed, 0.3s) ease,
+                transform var(--anim-speed, 0.3s) cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.2s ease;
+            z-index: 5;
+        }
+        .draw-result .card-chip.anim-scale.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .draw-result .card-chip.anim-none {
+            opacity: 0;
+            transition: opacity 0.01s ease, box-shadow 0.2s ease;
+            z-index: 5;
+        }
+        .draw-result .card-chip.anim-none.show {
+            opacity: 1;
+        }
+
+        .draw-result .placeholder-text {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-left: 6px;
+        }
+        .draw-result .extra-info {
+            color: #475569;
+            font-size: 13px;
+            margin-left: 2px;
+        }
+
+        /* ---------- 统计结果 ---------- */
+        .stats-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #1e293b;
+        }
+        .stats-summary span {
+            background: #f1f5f9;
+            padding: 2px 14px;
+            border-radius: 30px;
+        }
+        .stats-table-wrap {
+            max-height: 240px;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .stats-table th {
+            background: #f1f5f9;
+            text-align: left;
+            padding: 8px 12px;
+            color: #475569;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            font-size: 12px;
+        }
+        .stats-table td {
+            padding: 6px 12px;
+            border-bottom: 1px solid #f0f2f5;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+        .stats-table tr:last-child td {
+            border-bottom: none;
+        }
+        .stats-table .bar-wrap {
+            width: 100%;
+            max-width: 120px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .stats-table .bar-fill {
+            height: 100%;
+            background: var(--accent-color, #3b82f6);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        .stats-table .count-num {
+            font-weight: 500;
+            color: #0f172a;
+        }
+        .stats-table .pct {
+            color: #475569;
+            font-size: 12px;
+        }
+        .stats-table .card-mini {
+            width: 20px;
+            height: 28px;
+            border-radius: 3px;
+            object-fit: cover;
+            border: 1px solid #d1d9e6;
+            background: #fff;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .stats-table .name-cell {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .no-stats {
+            text-align: center;
+            color: #94a3b8;
+            padding: 24px 0;
+            font-size: 14px;
+        }
+
+        /* ---------- 随机数 ---------- */
+        .random-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+            margin-bottom: 12px;
+        }
+        .random-controls label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: #1e293b;
+        }
+        .random-controls input[type="number"] {
+            width: 60px;
+            padding: 6px 8px;
+            border: 1px solid #d1d9e6;
+            border-radius: 30px;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+        }
+        .random-controls input[type="number"]:focus {
+            border-color: var(--accent-color, #3b82f6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+        .random-controls input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-color, #3b82f6);
+        }
+        .random-controls select {
+            padding: 5px 10px;
+            border: 1px solid #d1d9e6;
+            border-radius: 30px;
+            font-size: 13px;
+            background: #fff;
+            outline: none;
+        }
+        .random-controls select:focus {
+            border-color: var(--accent-color, #3b82f6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+        .random-controls button {
+            padding: 6px 20px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            background: var(--accent-color, #3b82f6);
+            color: white;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-height: 38px;
+        }
+        .random-controls button:active {
+            filter: brightness(0.9);
+        }
+
+        .random-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #1e293b;
+        }
+        .random-stats span {
+            background: #f1f5f9;
+            padding: 2px 12px;
+            border-radius: 30px;
+        }
+        .random-result-wrap {
+            max-height: 160px;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            padding: 6px 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+            align-content: flex-start;
+            min-height: 40px;
+        }
+        .random-result-wrap .rand-chip {
+            background: #eef2f6;
+            padding: 3px 12px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #0f172a;
+            border: 1px solid #d1d9e6;
+        }
+        .random-result-wrap .empty-text {
+            color: #94a3b8;
+            font-size: 13px;
+            padding: 6px 0;
+        }
+
+        /* ---------- 抛硬币 (移动适配) ---------- */
+        .coin-area .coin-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 4px 0;
+        }
+        .coin-area .coin-display {
+            width: 100px;
+            height: 100px;
+            perspective: 500px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .coin-area .coin-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+        .coin-area .coin-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 700;
+            border: 2px solid #e2e8f0;
+            box-shadow: inset 0 -4px 12px rgba(0, 0, 0, 0.04);
+            user-select: none;
+        }
+        .coin-area .coin-face.heads {
+            background: radial-gradient(ellipse at 30% 30%, #fff8e7, #f5e6c8);
+            color: #b8860b;
+            transform: rotateY(0deg);
+            border-color: #d4a843;
+        }
+        .coin-area .coin-face.tails {
+            background: radial-gradient(ellipse at 30% 30%, #f0f4f8, #d1d9e6);
+            color: #475569;
+            transform: rotateY(180deg);
+            border-color: #94a3b8;
+        }
+        .coin-area .coin-face .coin-icon {
+            font-size: 42px;
+            line-height: 1;
+        }
+        .coin-area .coin-face .coin-label {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 2px;
+            opacity: 0.7;
+        }
+        .coin-area .coin-result-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            min-height: 28px;
+            text-align: center;
+        }
+        .coin-area .coin-result-text .highlight {
+            color: var(--accent-color, #3b82f6);
+        }
+        .coin-area .coin-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .coin-area .coin-controls button {
+            padding: 6px 24px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            background: var(--accent-color, #3b82f6);
+            color: #fff;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-height: 38px;
+        }
+        .coin-area .coin-controls button:active {
+            filter: brightness(0.9);
+        }
+        .coin-area .coin-controls button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .coin-area .coin-controls button.secondary {
+            background: #eef2f6;
+            color: #1e293b;
+        }
+        .coin-area .coin-controls button.secondary:active {
+            background: #dce3ec;
+        }
+        .coin-area .coin-stats {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px 20px;
+            font-size: 13px;
+            color: #475569;
+        }
+        .coin-area .coin-stats span {
+            background: #f1f5f9;
+            padding: 2px 12px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .coin-area .coin-stats .stat-num {
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .coin-area .coin-stats .stat-num.heads-color {
+            color: #d4a843;
+        }
+        .coin-area .coin-stats .stat-num.tails-color {
+            color: #64748b;
+        }
+        .coin-area .coin-history {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            justify-content: center;
+            min-height: 24px;
+        }
+        .coin-area .coin-history .h-item {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            border: 1px solid #d1d9e6;
+            background: #fff;
+        }
+        .coin-area .coin-history .h-item.heads {
+            background: #fef3c7;
+            border-color: #d4a843;
+            color: #b8860b;
+        }
+        .coin-area .coin-history .h-item.tails {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+            color: #475569;
+        }
+        .coin-area .coin-history .h-item.empty {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            color: #cbd5e1;
+        }
+        .coin-area .coin-history-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* ---------- 描述模态框 (移动适配) ---------- */
+        .desc-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            padding: 20px;
+            animation: fadeIn 0.25s ease;
+        }
+        .desc-modal-overlay.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .desc-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            border-radius: 20px;
+            max-width: 340px;
+            width: 100%;
+            padding: 24px 24px 20px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.30);
+            text-align: center;
+            border: 2px solid var(--accent-color, #3b82f6);
+            animation: modalPop 0.3s ease;
+        }
+        @keyframes modalPop {
+            from {
+                transform: translate(-50%, -50%) scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+        .desc-modal .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+        .desc-modal .close-btn:active {
+            color: #1e293b;
+        }
+        .desc-modal .modal-card-image {
+            width: 68px;
+            height: 94px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 2px solid #d1d9e6;
+            background: #f8fafc;
+            margin: 0 auto 10px;
+            display: block;
+        }
+        .desc-modal .modal-card-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+        .desc-modal .modal-card-desc {
+            font-size: 15px;
+            color: #475569;
+            line-height: 1.5;
+            padding: 6px 0 2px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 32px;
+            border-top: 1px solid #f0f2f5;
+            margin-top: 6px;
+            padding-top: 10px;
+        }
+        .desc-modal .modal-card-desc.empty {
+            color: #94a3b8;
+            font-style: italic;
+        }
+        .desc-modal .modal-hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+
+        /* ---------- 速度滑块 ---------- */
+        .speed-slider {
+            width: 70px;
+            accent-color: var(--accent-color, #3b82f6);
+        }
+
+        /* ---------- 通用 ---------- */
+        .flex {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .mt-1 {
+            margin-top: 6px;
+        }
+
+        /* 滚动条美化 */
+        .library-list::-webkit-scrollbar,
+        .stats-table-wrap::-webkit-scrollbar,
+        .random-result-wrap::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .library-list::-webkit-scrollbar-thumb,
+        .stats-table-wrap::-webkit-scrollbar-thumb,
+        .random-result-wrap::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .library-list::-webkit-scrollbar-track,
+        .stats-table-wrap::-webkit-scrollbar-track,
+        .random-result-wrap::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        /* ---------- 响应式微调 ---------- */
+        @media (max-width: 400px) {
+            .draw-result .card-chip {
+                width: 48px;
+                height: 68px;
+            }
+            .draw-result .deck-stack {
+                width: 44px;
+                height: 62px;
+            }
+            .draw-result .card-chip.text-chip {
+                font-size: 12px;
+            }
+            .draw-result .card-chip.text-chip .card-name-text {
+                font-size: 11px;
+                -webkit-line-clamp: 1;
+            }
+            .coin-area .coin-display {
+                width: 80px;
+                height: 80px;
+            }
+            .coin-area .coin-face {
+                font-size: 28px;
+            }
+            .coin-area .coin-face .coin-icon {
+                font-size: 34px;
+            }
+            .desc-modal {
+                max-width: 290px;
+                padding: 18px 18px 16px;
+            }
+            .desc-modal .modal-card-image {
+                width: 56px;
+                height: 78px;
+            }
+            .library-controls input[type="text"] {
+                min-width: 60px;
+            }
+            .stats-table td,
+            .stats-table th {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+            .stats-table .bar-wrap {
+                max-width: 80px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .draw-result .card-chip {
+                width: 42px;
+                height: 60px;
+            }
+            .draw-result .deck-stack {
+                width: 38px;
+                height: 54px;
+            }
+            .draw-result .card-chip.text-chip {
+                font-size: 10px;
+            }
+            .draw-result .card-chip.text-chip .card-name-text {
+                font-size: 10px;
+            }
+            .draw-controls button,
+            .random-controls button {
+                font-size: 12px;
+                padding: 5px 12px;
+                min-height: 32px;
+            }
+            .coin-area .coin-display {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <!-- 顶部 -->
+        <div class="app-header">
+            <h1>
+                🃏 抽牌
+                <small>手机版</small>
+            </h1>
+            <span class="theme-controls">
+                <input type="color" id="theme-color" value="#3b82f6" />
+            </span>
+        </div>
+
+        <!-- 布局控制栏 -->
+        <div class="layout-bar">
+            <select id="show-component-select">
+                <option value="">显示隐藏的组件</option>
+            </select>
+            <button class="btn" id="reset-layout">↺ 重置</button>
+            <span class="spacer"></span>
+            <span class="hint">↑↓✕</span>
+        </div>
+
+        <!-- 组件网格 -->
+        <div class="components-grid" id="components-grid">
+            <!-- ========== 牌库管理 ========== -->
+            <div class="card theme-accent" id="card-library" data-component="library">
+                <div class="card-header" data-target="card-library">
+                    <h2>📚 牌库 <span class="badge" id="lib-total">0 张</span></h2>
+                    <div class="header-actions">
+                        <button class="move-up" title="上移">↑</button>
+                        <button class="move-down" title="下移">↓</button>
+                        <button class="close-btn" title="隐藏">✕</button>
+                        <button class="collapse-btn" title="折叠">▾</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="preset-btns">
+                        <button data-preset="poker">♠ 扑克</button>
+                        <button data-preset="mtg">🌿 万智</button>
+                        <button data-preset="dnd">🎲 D20</button>
+                        <button data-preset="clear">🗑️ 清空</button>
+                    </div>
+                    <div class="library-controls">
+                        <input type="text" id="card-name" placeholder="牌名" value="火焰" />
+                        <input type="text" id="card-image" placeholder="图片 URL" />
+                        <button class="file-btn" id="upload-btn">📁
+                            <input type="file" id="image-upload" accept="image/*" />
+                        </button>
+                        <input type="number" id="card-count" placeholder="数量" value="5" min="1" />
+                        <textarea id="card-desc" placeholder="描述" rows="1"></textarea>
+                        <button class="primary" id="add-card">➕ 添加</button>
+                    </div>
+                    <div class="library-list" id="library-list">
+                        <div class="empty-lib">暂无牌</div>
+                    </div>
+                    <div class="total-count" id="lib-total-text">总计 0 张</div>
+                    <div class="io-buttons">
+                        <button class="export-btn" id="export-lib">📤 导出</button>
+                        <div class="file-input-wrapper">
+                            <button class="import-btn">📥 导入</button>
+                            <input type="file" id="import-file" accept=".json" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 抽牌控制 ========== -->
+            <div class="card theme-accent" id="card-draw" data-component="draw">
+                <div class="card-header" data-target="card-draw">
+                    <h2>🎯 抽牌 <span class="badge" id="draw-mode">放回</span></h2>
+                    <div class="header-actions">
+                        <button class="move-up" title="上移">↑</button>
+                        <button class="move-down" title="下移">↓</button>
+                        <button class="close-btn" title="隐藏">✕</button>
+                        <button class="collapse-btn" title="折叠">▾</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="draw-controls">
+                        <label>
+                            抽
+                            <input type="number" id="draw-count" value="1" min="1" max="50" />
+                            张
+                        </label>
+                        <label>
+                            模拟
+                            <input type="number" id="sim-times" value="100" min="1" max="100000" />
+                            次
+                        </label>
+                        <button id="btn-simulate">▶ 模拟</button>
+                        <button id="btn-draw-one" class="primary">🎲 抽</button>
+                        <button id="btn-shuffle" class="success" style="background:#d1fae5; color:#065f46;">🔄 洗牌</button>
+                    </div>
+
+                    <div class="draw-controls" style="margin-bottom: 8px;">
+                        <label>
+                            动画
+                            <select id="anim-select">
+                                <option value="deck">牌堆</option>
+                                <option value="fade-in">淡入</option>
+                                <option value="bounce">弹入</option>
+                                <option value="flip">翻转</option>
+                                <option value="scale">缩放</option>
+                                <option value="none">无</option>
+                            </select>
+                        </label>
+                        <label>
+                            速度
+                            <input type="range" class="speed-slider" id="anim-speed" min="100" max="800" value="350" />
+                            <span id="speed-label" style="font-size:12px; color:#64748b; min-width:32px;">350</span>
+                        </label>
+                    </div>
+
+                    <div class="draw-result" id="last-draw-result">
+                        <span class="placeholder-text">点击「抽」试试</span>
+                    </div>
+
+                    <div class="flex" style="margin-top:6px;">
+                        <label style="font-size:13px; color:#475569; display:flex; align-items:center; gap:4px;">
+                            <input type="checkbox" id="replace-check" checked />
+                            放回
+                        </label>
+                        <span style="font-size:12px; color:#94a3b8;">（不放回时消耗牌库）</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 统计结果 ========== -->
+            <div class="card theme-accent" id="card-stats" data-component="stats">
+                <div class="card-header" data-target="card-stats">
+                    <h2>📊 统计 <span class="badge" id="stats-total">0 次</span></h2>
+                    <div class="header-actions">
+                        <button class="move-up" title="上移">↑</button>
+                        <button class="move-down" title="下移">↓</button>
+                        <button class="close-btn" title="隐藏">✕</button>
+                        <button class="collapse-btn" title="折叠">▾</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="stats-summary" id="stats-summary">
+                        <span>总抽取: <strong id="total-draws">0</strong></span>
+                        <span>牌型: <strong id="unique-types">0</strong></span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                        <label style="font-size:12px; color:#64748b; display:flex; align-items:center; gap:4px;">
+                            TOP
+                            <input type="number" id="stats-top-n" value="20" min="1" max="100" style="width:44px; padding:2px 4px; border:1px solid #d1d9e6; border-radius:30px; font-size:12px; text-align:center;" />
+                        </label>
+                    </div>
+                    <div class="stats-table-wrap" id="stats-table-wrap">
+                        <div class="no-stats">暂无数据</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 随机数生成器 ========== -->
+            <div class="card theme-accent" id="card-random" data-component="random">
+                <div class="card-header" data-target="card-random">
+                    <h2>🎲 随机数 <span class="badge" id="rand-total">0 个</span></h2>
+                    <div class="header-actions">
+                        <button class="move-up" title="上移">↑</button>
+                        <button class="move-down" title="下移">↓</button>
+                        <button class="close-btn" title="隐藏">✕</button>
+                        <button class="collapse-btn" title="折叠">▾</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="random-controls">
+                        <label>最小 <input type="number" id="rand-min" value="1" /></label>
+                        <label>最大 <input type="number" id="rand-max" value="100" /></label>
+                        <label>个数 <input type="number" id="rand-count" value="10" min="1" /></label>
+                        <label><input type="checkbox" id="rand-allow-repeat" checked /> 重复</label>
+                        <label><input type="checkbox" id="rand-sort" /> 排序</label>
+                        <select id="rand-format">
+                            <option value="int">整数</option>
+                            <option value="float">小数</option>
+                            <option value="percent">百分比</option>
+                        </select>
+                        <button id="btn-generate">⚡ 生成</button>
+                    </div>
+
+                    <div class="random-stats" id="rand-stats">
+                        <span>总和: <strong id="rand-sum">-</strong></span>
+                        <span>平均: <strong id="rand-avg">-</strong></span>
+                        <span>最大: <strong id="rand-max-val">-</strong></span>
+                        <span>最小: <strong id="rand-min-val">-</strong></span>
+                    </div>
+
+                    <div class="random-result-wrap" id="rand-result">
+                        <span class="empty-text">点击生成</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 抛硬币 ========== -->
+            <div class="card theme-accent coin-area" id="card-coin" data-component="coin">
+                <div class="card-header" data-target="card-coin">
+                    <h2>🪙 抛硬币 <span class="badge" id="coin-badge">0 次</span></h2>
+                    <div class="header-actions">
+                        <button class="move-up" title="上移">↑</button>
+                        <button class="move-down" title="下移">↓</button>
+                        <button class="close-btn" title="隐藏">✕</button>
+                        <button class="collapse-btn" title="折叠">▾</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="coin-wrapper">
+                        <div class="coin-display" id="coin-display">
+                            <div class="coin-inner" id="coin-inner">
+                                <div class="coin-face heads">
+                                    <div style="display:flex;flex-direction:column;align-items:center;">
+                                        <span class="coin-icon">🦅</span>
+                                        <span class="coin-label">正面</span>
+                                    </div>
+                                </div>
+                                <div class="coin-face tails">
+                                    <div style="display:flex;flex-direction:column;align-items:center;">
+                                        <span class="coin-icon">🏛️</span>
+                                        <span class="coin-label">反面</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="coin-result-text" id="coin-result">点击硬币或按钮</div>
+
+                        <div class="coin-controls">
+                            <button id="coin-flip-btn">🪙 抛</button>
+                            <button class="secondary" id="coin-reset-btn">↺ 重置</button>
+                        </div>
+
+                        <div class="coin-stats" id="coin-stats">
+                            <span>正面: <span class="stat-num heads-color" id="coin-heads">0</span></span>
+                            <span>反面: <span class="stat-num tails-color" id="coin-tails">0</span></span>
+                            <span>总: <span class="stat-num" id="coin-total">0</span></span>
+                            <span>正面率: <span class="stat-num" id="coin-rate">0%</span></span>
+                        </div>
+
+                        <div class="coin-history" id="coin-history"></div>
+                        <div class="coin-history-label">最近 20 次</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 描述模态框 ====== -->
+    <div class="desc-modal-overlay" id="desc-modal">
+        <div class="desc-modal">
+            <button class="close-btn" id="modal-close">✕</button>
+            <img class="modal-card-image" id="modal-image" src="" alt="卡牌" style="display:none;" />
+            <div class="modal-card-name" id="modal-name">卡牌名称</div>
+            <div class="modal-card-desc" id="modal-desc">卡牌描述</div>
+            <div class="modal-hint">点击外部或按 ✕ 关闭</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ============================================================
+            //  Xorshift128+ 随机数生成器
+            // ============================================================
+            class Xorshift128 {
+                constructor(seed) {
+                    this.seed = seed || Date.now() + Math.random() * 999999;
+                    let s = this.seed;
+                    this.x = 123456789;
+                    this.y = 362436069;
+                    this.z = 521288629;
+                    this.w = s;
+                    for (let i = 0; i < 20; i++) this.nextUint();
+                }
+                nextUint() {
+                    const t = this.x ^ (this.x << 11);
+                    this.x = this.y;
+                    this.y = this.z;
+                    this.z = this.w;
+                    this.w = (this.w ^ (this.w >>> 19)) ^ (t ^ (t >>> 8));
+                    return this.w >>> 0;
+                }
+                nextDouble() { return (this.nextUint() >>> 0) / 4294967296; }
+                nextFloat(min, max) { return min + (max - min) * this.nextDouble(); }
+                nextInt(min, max) { return Math.floor(this.nextFloat(min, max + 1)); }
+                shuffleArray(arr) {
+                    for (let i = arr.length - 1; i > 0; i--) {
+                        const j = this.nextInt(0, i);
+                        [arr[i], arr[j]] = [arr[j], arr[i]];
+                    }
+                    return arr;
+                }
+                flipCoin() { return this.nextDouble() < 0.5; }
+            }
+            const rng = new Xorshift128(Date.now() + Math.random() * 1e9);
+
+            // ============================================================
+            //  主题色
+            // ============================================================
+            const themeColorInput = document.getElementById('theme-color');
+            const root = document.documentElement;
+
+            function setThemeColor(color) {
+                root.style.setProperty('--accent-color', color);
+                document.querySelectorAll('.card.theme-accent').forEach(el => {
+                    el.style.setProperty('--accent-color', color);
+                });
+                document.querySelectorAll(
+                    '.btn-primary, .primary, .draw-controls button:not(.success), .random-controls button, .coin-controls button:not(.secondary)'
+                    ).forEach(btn => {
+                    if (!btn.classList.contains('danger') && !btn.classList.contains('success') &&
+                        !btn.classList.contains('file-btn') && !btn.classList.contains('export-btn') &&
+                        !btn.classList.contains('import-btn')) {
+                        btn.style.setProperty('--accent-color', color);
+                    }
+                });
+                document.querySelector('.desc-modal')?.style.setProperty('border-color', color);
+            }
+            themeColorInput.addEventListener('input', function() { setThemeColor(this.value); });
+            setThemeColor(themeColorInput.value);
+
+            // ============================================================
+            //  折叠 & 组件移动/隐藏
+            // ============================================================
+            const grid = document.getElementById('components-grid');
+
+            document.querySelectorAll('.card').forEach(card => {
+                const header = card.querySelector('.card-header');
+                const body = card.querySelector('.card-body');
+                const collapseBtn = header.querySelector('.collapse-btn');
+                const closeBtn = header.querySelector('.close-btn');
+                const moveUp = header.querySelector('.move-up');
+                const moveDown = header.querySelector('.move-down');
+
+                if (collapseBtn) {
+                    collapseBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        body.classList.toggle('collapsed');
+                        collapseBtn.classList.toggle('collapsed');
+                    });
+                    header.addEventListener('click', function(e) {
+                        if (e.target.closest('.header-actions')) return;
+                        body.classList.toggle('collapsed');
+                        collapseBtn.classList.toggle('collapsed');
+                    });
+                }
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        card.classList.add('hidden');
+                        updateHiddenSelect();
+                    });
+                }
+                if (moveUp) {
+                    moveUp.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const prev = card.previousElementSibling;
+                        if (prev && prev.classList.contains('card')) {
+                            grid.insertBefore(card, prev);
+                        }
+                    });
+                }
+                if (moveDown) {
+                    moveDown.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const next = card.nextElementSibling;
+                        if (next && next.classList.contains('card')) {
+                            grid.insertBefore(next, card);
+                        }
+                    });
+                }
+            });
+
+            function updateHiddenSelect() {
+                const select = document.getElementById('show-component-select');
+                select.innerHTML = '<option value="">显示隐藏的组件</option>';
+                document.querySelectorAll('.card.hidden').forEach(card => {
+                    const label = card.querySelector('h2')?.textContent?.trim() || '未命名';
+                    const opt = document.createElement('option');
+                    opt.value = card.id;
+                    opt.textContent = '➕ ' + label;
+                    select.appendChild(opt);
+                });
+            }
+            document.getElementById('show-component-select').addEventListener('change', function() {
+                if (this.value) {
+                    const card = document.getElementById(this.value);
+                    if (card) {
+                        card.classList.remove('hidden');
+                        this.value = '';
+                        updateHiddenSelect();
+                    }
+                }
+            });
+            document.getElementById('reset-layout').addEventListener('click', function() {
+                document.querySelectorAll('.card.hidden').forEach(c => c.classList.remove('hidden'));
+                updateHiddenSelect();
+            });
+            updateHiddenSelect();
+
+            // ============================================================
+            //  动画速度
+            // ============================================================
+            const speedSlider = document.getElementById('anim-speed');
+            const speedLabel = document.getElementById('speed-label');
+            speedSlider.addEventListener('input', function() {
+                const val = parseInt(this.value);
+                speedLabel.textContent = val;
+                document.documentElement.style.setProperty('--anim-speed', (val / 1000) + 's');
+            });
+            document.documentElement.style.setProperty('--anim-speed', '0.35s');
+
+            // ============================================================
+            //  字号工具
+            // ============================================================
+            function getFontSizeByLength(text) {
+                const len = text.length;
+                if (len <= 2) return 18;
+                if (len <= 4) return 16;
+                if (len <= 6) return 14;
+                if (len <= 8) return 13;
+                return 12;
+            }
+
+            // ============================================================
+            //  牌库模拟器
+            // ============================================================
+            let library = [];
+            let stats = {};
+            let totalDraws = 0;
+            let isAnimating = false;
+            let remainingCards = 0;
+
+            const libListEl = document.getElementById('library-list');
+            const libTotalEl = document.getElementById('lib-total');
+            const libTotalText = document.getElementById('lib-total-text');
+            const cardNameInput = document.getElementById('card-name');
+            const cardImageInput = document.getElementById('card-image');
+            const cardCountInput = document.getElementById('card-count');
+            const cardDescInput = document.getElementById('card-desc');
+            const addBtn = document.getElementById('add-card');
+            const drawCountInput = document.getElementById('draw-count');
+            const simTimesInput = document.getElementById('sim-times');
+            const simBtn = document.getElementById('btn-simulate');
+            const drawOneBtn = document.getElementById('btn-draw-one');
+            const shuffleBtn = document.getElementById('btn-shuffle');
+            const lastDrawResult = document.getElementById('last-draw-result');
+            const statsTableWrap = document.getElementById('stats-table-wrap');
+            const statsTotalEl = document.getElementById('stats-total');
+            const totalDrawsSpan = document.getElementById('total-draws');
+            const uniqueTypesSpan = document.getElementById('unique-types');
+            const replaceCheck = document.getElementById('replace-check');
+            const drawModeBadge = document.getElementById('draw-mode');
+            const imageUpload = document.getElementById('image-upload');
+            const exportBtn = document.getElementById('export-lib');
+            const importFileInput = document.getElementById('import-file');
+            const animSelect = document.getElementById('anim-select');
+            const statsTopNInput = document.getElementById('stats-top-n');
+
+            // ---- 模态框 ----
+            const modalOverlay = document.getElementById('desc-modal');
+            const modalClose = document.getElementById('modal-close');
+            const modalImage = document.getElementById('modal-image');
+            const modalName = document.getElementById('modal-name');
+            const modalDesc = document.getElementById('modal-desc');
+
+            function showDescModal(name, desc, image) {
+                modalName.textContent = name || '未命名';
+                if (image) {
+                    modalImage.src = image;
+                    modalImage.style.display = 'block';
+                } else {
+                    modalImage.style.display = 'none';
+                }
+                if (desc && desc.trim()) {
+                    modalDesc.textContent = desc.trim();
+                    modalDesc.className = 'modal-card-desc';
+                } else {
+                    modalDesc.textContent = '（该卡牌暂无描述）';
+                    modalDesc.className = 'modal-card-desc empty';
+                }
+                const color = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() ||
+                    '#3b82f6';
+                document.querySelector('.desc-modal').style.borderColor = color;
+                modalOverlay.classList.add('active');
+            }
+
+            function hideDescModal() { modalOverlay.classList.remove('active'); }
+            modalClose.addEventListener('click', hideDescModal);
+            modalOverlay.addEventListener('click', function(e) { if (e.target === modalOverlay) hideDescModal(); });
+            document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideDescModal(); });
+
+            // ---- 剩余牌数 ----
+            function updateRemainingIndicator() {
+                const indicator = document.getElementById('remaining-indicator');
+                if (!indicator) return;
+                const isReplace = replaceCheck.checked;
+                if (isReplace) {
+                    indicator.classList.add('hidden');
+                    return;
+                }
+                indicator.classList.remove('hidden');
+                const countEl = document.getElementById('remaining-count');
+                if (countEl) {
+                    const val = Math.max(0, remainingCards);
+                    countEl.textContent = val;
+                    if (val <= 0) {
+                        countEl.classList.add('zero');
+                    } else {
+                        countEl.classList.remove('zero');
+                    }
+                }
+            }
+
+            function ensureIndicator() {
+                let indicator = document.getElementById('remaining-indicator');
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.id = 'remaining-indicator';
+                    indicator.className = 'remaining-indicator hidden';
+                    indicator.innerHTML = '🃏 剩余 <span class="num" id="remaining-count">0</span> 张';
+                    lastDrawResult.insertBefore(indicator, lastDrawResult.firstChild);
+                }
+                if (!document.getElementById('remaining-count')) {
+                    const countEl = document.createElement('span');
+                    countEl.id = 'remaining-count';
+                    countEl.className = 'num';
+                    countEl.textContent = '0';
+                    const textNode = indicator.childNodes[2];
+                    if (textNode) {
+                        indicator.insertBefore(countEl, textNode.nextSibling);
+                    } else {
+                        indicator.appendChild(countEl);
+                    }
+                }
+                updateRemainingIndicator();
+                return indicator;
+            }
+
+            // ---- 牌库操作 ----
+            function getTotalCount() {
+                return library.reduce((sum, item) => sum + item.count, 0);
+            }
+
+            function resetRemainingCards() {
+                remainingCards = getTotalCount();
+                updateRemainingIndicator();
+                updateDrawButtons();
+            }
+
+            function buildExpandedDeck() {
+                const deck = [];
+                for (const item of library) {
+                    for (let i = 0; i < item.count; i++) {
+                        deck.push({ name: item.name, image: item.image || null, desc: item.desc || '' });
+                    }
+                }
+                return rng.shuffleArray(deck);
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function editDesc(index) {
+                const item = library[index];
+                if (!item) return;
+                const newDesc = prompt(`编辑“${item.name}”的描述：`, item.desc || '');
+                if (newDesc !== null) {
+                    item.desc = newDesc.trim();
+                    renderLibrary();
+                }
+            }
+
+            function renderLibrary() {
+                libListEl.innerHTML = '';
+                if (library.length === 0) {
+                    libListEl.innerHTML = '<div class="empty-lib">暂无牌</div>';
+                } else {
+                    for (let i = 0; i < library.length; i++) {
+                        const item = library[i];
+                        const div = document.createElement('div');
+                        div.className = 'library-item';
+                        let imgHtml = '';
+                        if (item.image) {
+                            imgHtml = `<img class="card-preview" src="${escapeHtml(item.image)}" alt="" />`;
+                        } else {
+                            imgHtml =
+                                `<div class="card-preview" style="display:flex;align-items:center;justify-content:center;font-size:10px;background:#f8fafc;color:#94a3b8;">无图</div>`;
+                        }
+                        const descShort = item.desc ? item.desc.substring(0, 16) + (item.desc.length > 16 ? '…' : '') :
+                            '';
+                        const descHtml = descShort ?
+                            `<span class="desc-preview" title="${escapeHtml(item.desc)}">${escapeHtml(descShort)}</span>` :
+                            '';
+                        div.innerHTML = `
+                            <div class="info">
+                                ${imgHtml}
+                                <span class="name">${escapeHtml(item.name)}</span>
+                                ${descHtml}
+                            </div>
+                            <span class="count">×${item.count}</span>
+                            <div class="actions">
+                                <button class="edit-desc-btn" data-index="${i}" title="编辑描述">✎</button>
+                                <button class="del-btn" data-index="${i}" title="移除">✕</button>
+                            </div>
+                        `;
+                        libListEl.appendChild(div);
+                    }
+                    document.querySelectorAll('.edit-desc-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const idx = parseInt(this.dataset.index);
+                            editDesc(idx);
+                        });
+                    });
+                    document.querySelectorAll('.library-item .del-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const idx = parseInt(this.dataset.index);
+                            library.splice(idx, 1);
+                            renderLibrary();
+                            clearStats();
+                            resetRemainingCards();
+                            updateUI();
+                        });
+                    });
+                }
+                const total = getTotalCount();
+                libTotalEl.textContent = total + ' 张';
+                libTotalText.textContent = '总计 ' + total + ' 张';
+                resetRemainingCards();
+                updateUI();
+            }
+
+            function updateUI() {
+                const total = getTotalCount();
+                const isReplace = replaceCheck.checked;
+                drawModeBadge.textContent = isReplace ? '放回' : '不放回';
+                updateRemainingIndicator();
+                updateDrawButtons();
+            }
+
+            function updateDrawButtons() {
+                const total = getTotalCount();
+                const isReplace = replaceCheck.checked;
+                const canDraw = (total > 0) && (isReplace || remainingCards > 0) && !isAnimating;
+                drawOneBtn.disabled = !canDraw;
+                simBtn.disabled = !canDraw;
+                if (!isReplace && remainingCards <= 0 && total > 0) {
+                    drawOneBtn.title = '牌堆已空，请点击“洗牌”';
+                    simBtn.title = '牌堆已空，请点击“洗牌”';
+                } else {
+                    drawOneBtn.title = '';
+                    simBtn.title = '';
+                }
+            }
+
+            function clearStats() {
+                stats = {};
+                totalDraws = 0;
+                resetRemainingCards();
+                renderStats();
+                updateUI();
+            }
+
+            function renderStats() {
+                const total = totalDraws;
+                statsTotalEl.textContent = total + ' 次';
+                totalDrawsSpan.textContent = total;
+                const unique = Object.keys(stats).length;
+                uniqueTypesSpan.textContent = unique;
+
+                if (total === 0 || unique === 0) {
+                    statsTableWrap.innerHTML = '<div class="no-stats">暂无数据</div>';
+                    return;
+                }
+
+                let topN = parseInt(statsTopNInput.value);
+                if (isNaN(topN) || topN < 1) topN = 20;
+
+                const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+                const displayData = sorted.slice(0, topN);
+                const maxCount = displayData.length > 0 ? displayData[0][1] : 1;
+                const imgMap = {};
+                for (const item of library) {
+                    imgMap[item.name] = item.image;
+                }
+
+                let html = `<table class="stats-table">
+                    <thead><tr><th>牌名</th><th>次数</th><th>占比</th><th>分布</th></tr></thead><tbody>`;
+                for (const [name, count] of displayData) {
+                    const pct = (count / total * 100).toFixed(1);
+                    const barWidth = maxCount > 0 ? (count / maxCount * 100) : 0;
+                    const imgSrc = imgMap[name] || '';
+                    const imgTag = imgSrc ? `<img class="card-mini" src="${escapeHtml(imgSrc)}" alt="" />` : '';
+                    html += `<tr>
+                        <td><div class="name-cell">${imgTag} ${escapeHtml(name)}</div></td>
+                        <td class="count-num">${count}</td>
+                        <td class="pct">${pct}%</td>
+                        <td><div class="bar-wrap"><div class="bar-fill" style="width:${barWidth}%;"></div></div></td>
+                    </tr>`;
+                }
+                if (sorted.length > topN) {
+                    html +=
+                        `<tr><td colspan="4" style="text-align:center;color:#94a3b8;font-size:12px;">… 还有 ${sorted.length - topN} 种</td></tr>`;
+                }
+                html += `</tbody></table>`;
+                statsTableWrap.innerHTML = html;
+            }
+
+            function drawCards(count, replace) {
+                if (library.length === 0) return [];
+                let deck = buildExpandedDeck();
+                if (deck.length === 0) return [];
+
+                if (!replace) {
+                    const available = Math.min(count, deck.length);
+                    if (available < count) {
+                        count = available;
+                    }
+                    if (remainingCards < count) {
+                        count = remainingCards;
+                    }
+                }
+
+                const drawn = [];
+                let workingDeck = deck.slice();
+
+                for (let i = 0; i < count; i++) {
+                    if (workingDeck.length === 0) break;
+                    const idx = rng.nextInt(0, workingDeck.length - 1);
+                    const card = workingDeck[idx];
+                    drawn.push(card);
+                    if (!replace) {
+                        workingDeck.splice(idx, 1);
+                        remainingCards = Math.max(0, remainingCards - 1);
+                    }
+                }
+                if (!replace) {
+                    updateRemainingIndicator();
+                }
+                return drawn;
+            }
+
+            function updateStats(drawnCards) {
+                for (const card of drawnCards) {
+                    stats[card.name] = (stats[card.name] || 0) + 1;
+                }
+                totalDraws += drawnCards.length;
+                renderStats();
+                updateUI();
+            }
+
+            // ---- 显示抽牌结果 ----
+            function showLastDraw(cards) {
+                const oldIndicator = document.getElementById('remaining-indicator');
+                let indicatorHTML = '';
+                if (oldIndicator) {
+                    indicatorHTML = oldIndicator.outerHTML;
+                }
+                lastDrawResult.innerHTML = '';
+                if (indicatorHTML) {
+                    lastDrawResult.innerHTML = indicatorHTML;
+                } else {
+                    const ind = document.createElement('div');
+                    ind.id = 'remaining-indicator';
+                    ind.className = 'remaining-indicator hidden';
+                    ind.innerHTML = '🃏 剩余 <span class="num" id="remaining-count">0</span> 张';
+                    lastDrawResult.appendChild(ind);
+                }
+                ensureIndicator();
+
+                if (!cards || cards.length === 0) {
+                    const span = document.createElement('span');
+                    span.className = 'placeholder-text';
+                    span.textContent = '没有抽到牌';
+                    lastDrawResult.appendChild(span);
+                    updateRemainingIndicator();
+                    return;
+                }
+
+                const animType = animSelect.value;
+                const isDeckMode = (animType === 'deck');
+                const baseSpeed = parseInt(speedSlider.value) || 350;
+
+                const descMap = {};
+                const imgMap = {};
+                for (const item of library) {
+                    descMap[item.name] = item.desc || '';
+                    imgMap[item.name] = item.image || null;
+                }
+
+                const deckStack = document.createElement('div');
+                deckStack.className = 'deck-stack';
+                for (let i = 0; i < 4; i++) {
+                    const layer = document.createElement('div');
+                    layer.className = 'stack-card';
+                    const pattern = document.createElement('div');
+                    pattern.className = 'card-back-pattern';
+                    pattern.textContent = '🃏';
+                    layer.appendChild(pattern);
+                    deckStack.appendChild(layer);
+                }
+                lastDrawResult.appendChild(deckStack);
+
+                const stackRect = deckStack.getBoundingClientRect();
+                const containerRect = lastDrawResult.getBoundingClientRect();
+                const paddingLeft = parseFloat(getComputedStyle(lastDrawResult).paddingLeft) || 0;
+                const paddingTop = parseFloat(getComputedStyle(lastDrawResult).paddingTop) || 0;
+                const stackCenterX = stackRect.left - containerRect.left - paddingLeft + stackRect.width / 2;
+                const stackCenterY = stackRect.top - containerRect.top - paddingTop + stackRect.height / 2;
+
+                const totalCards = cards.length;
+                const maxDisplay = Math.min(totalCards, 16);
+                const displayCards = cards.slice(0, maxDisplay);
+
+                const cardContainer = document.createElement('div');
+                cardContainer.className = 'card-container';
+                cardContainer.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px; flex:1; min-width:0;';
+
+                if (isDeckMode) {
+                    const tempChips = [];
+                    for (let i = 0; i < displayCards.length; i++) {
+                        const card = displayCards[i];
+                        const chip = document.createElement('div');
+                        chip.className = 'card-chip';
+                        chip.dataset.name = card.name;
+                        chip.dataset.desc = card.desc || descMap[card.name] || '';
+                        chip.dataset.image = card.image || imgMap[card.name] || '';
+
+                        if (card.image) {
+                            const img = document.createElement('img');
+                            img.src = card.image;
+                            img.alt = card.name;
+                            chip.appendChild(img);
+                        } else {
+                            chip.className += ' text-chip';
+                            const textSpan = document.createElement('span');
+                            textSpan.className = 'card-name-text';
+                            textSpan.textContent = card.name;
+                            textSpan.style.fontSize = getFontSizeByLength(card.name) + 'px';
+                            chip.appendChild(textSpan);
+                        }
+
+                        chip.style.opacity = '0';
+                        chip.style.transform = 'none';
+                        chip.style.flex = '0 0 auto';
+                        cardContainer.appendChild(chip);
+                        tempChips.push({ el: chip, card: card });
+                    }
+                    lastDrawResult.appendChild(cardContainer);
+                    void cardContainer.offsetHeight;
+
+                    const positions = [];
+                    for (let i = 0; i < tempChips.length; i++) {
+                        const el = tempChips[i].el;
+                        positions.push({
+                            left: el.offsetLeft,
+                            top: el.offsetTop,
+                            width: el.offsetWidth,
+                            height: el.offsetHeight
+                        });
+                    }
+                    cardContainer.remove();
+
+                    const newContainer = document.createElement('div');
+                    newContainer.className = 'card-container';
+                    newContainer.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px; flex:1; min-width:0;';
+
+                    const chips = [];
+                    for (let i = 0; i < tempChips.length; i++) {
+                        const card = tempChips[i].card;
+                        const pos = positions[i];
+                        const chip = document.createElement('div');
+                        chip.className = 'card-chip flying';
+                        chip.dataset.name = card.name;
+                        chip.dataset.desc = card.desc || descMap[card.name] || '';
+                        chip.dataset.image = card.image || imgMap[card.name] || '';
+
+                        if (card.image) {
+                            const img = document.createElement('img');
+                            img.src = card.image;
+                            img.alt = card.name;
+                            chip.appendChild(img);
+                        } else {
+                            chip.className += ' text-chip';
+                            const textSpan = document.createElement('span');
+                            textSpan.className = 'card-name-text';
+                            textSpan.textContent = card.name;
+                            textSpan.style.fontSize = getFontSizeByLength(card.name) + 'px';
+                            chip.appendChild(textSpan);
+                        }
+
+                        chip.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            showDescModal(this.dataset.name, this.dataset.desc, this.dataset.image);
+                        });
+                        // 触摸反馈
+                        chip.addEventListener('touchstart', function(e) {
+                            // 防止双击缩放干扰
+                        }, { passive: true });
+
+                        const targetX = pos.left + pos.width / 2;
+                        const targetY = pos.top + pos.height / 2;
+                        const dx = stackCenterX - targetX;
+                        const dy = stackCenterY - targetY;
+                        const startRot = rng.nextFloat(-15, 15);
+                        chip.style.setProperty('--start-rot', startRot + 'deg');
+                        chip.style.transform = `translate(${dx}px, ${dy}px) scale(0.7) rotate(${startRot}deg)`;
+                        chip.style.opacity = '0';
+                        chip.style.flex = '0 0 auto';
+                        chip.style.zIndex = 10 + i;
+
+                        const delay = i * Math.max(50, baseSpeed * 0.5) + rng.nextInt(0, 60);
+                        chip.dataset.delay = delay;
+
+                        newContainer.appendChild(chip);
+                        chips.push({ el: chip, delay });
+                    }
+                    lastDrawResult.appendChild(newContainer);
+
+                    isAnimating = true;
+                    updateUI();
+
+                    let maxDelay = 0;
+                    for (const { el, delay } of chips) {
+                        setTimeout(() => {
+                            el.style.opacity = '1';
+                            el.style.transform = `translate(0, 0) scale(1) rotate(0deg)`;
+                            el.classList.add('landed');
+                            const rot = rng.nextFloat(-2, 2);
+                            const offX = rng.nextFloat(-4, 4);
+                            const offY = rng.nextFloat(-4, 4);
+                            el.style.transform += ` translate(${offX}px, ${offY}px)`;
+                            el.style.rotate = rot + 'deg';
+                            el.style.zIndex = 5;
+                        }, delay);
+                        maxDelay = Math.max(maxDelay, delay);
+                    }
+
+                    setTimeout(() => {
+                        isAnimating = false;
+                        updateUI();
+                    }, maxDelay + 500);
+
+                } else {
+                    for (let i = 0; i < displayCards.length; i++) {
+                        const card = displayCards[i];
+                        let animClass = 'anim-fade-in';
+                        if (animType === 'bounce') animClass = 'anim-bounce';
+                        else if (animType === 'flip') animClass = 'anim-flip';
+                        else if (animType === 'scale') animClass = 'anim-scale';
+                        else if (animType === 'none') animClass = 'anim-none';
+
+                        const chip = document.createElement('div');
+                        chip.className = `card-chip ${animClass}`;
+                        chip.dataset.name = card.name;
+                        chip.dataset.desc = card.desc || descMap[card.name] || '';
+                        chip.dataset.image = card.image || imgMap[card.name] || '';
+
+                        if (card.image) {
+                            const img = document.createElement('img');
+                            img.src = card.image;
+                            img.alt = card.name;
+                            chip.appendChild(img);
+                        } else {
+                            chip.className += ' text-chip';
+                            const textSpan = document.createElement('span');
+                            textSpan.className = 'card-name-text';
+                            textSpan.textContent = card.name;
+                            textSpan.style.fontSize = getFontSizeByLength(card.name) + 'px';
+                            chip.appendChild(textSpan);
+                        }
+
+                        chip.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            showDescModal(this.dataset.name, this.dataset.desc, this.dataset.image);
+                        });
+                        chip.addEventListener('touchstart', function(e) {}, { passive: true });
+
+                        chip.style.flex = '0 0 auto';
+                        chip.style.opacity = '0';
+                        chip.style.zIndex = 5 + i;
+                        cardContainer.appendChild(chip);
+                    }
+                    lastDrawResult.appendChild(cardContainer);
+                    void cardContainer.offsetHeight;
+
+                    isAnimating = true;
+                    updateUI();
+
+                    const chips = cardContainer.querySelectorAll('.card-chip');
+                    let maxDelay = 0;
+                    chips.forEach((el, i) => {
+                        const delay = i * Math.max(40, baseSpeed * 0.6) + rng.nextInt(0, 50);
+                        setTimeout(() => {
+                            el.style.opacity = '1';
+                            el.classList.add('show');
+                            const rot = rng.nextFloat(-2, 2);
+                            const offX = rng.nextFloat(-4, 4);
+                            const offY = rng.nextFloat(-4, 4);
+                            el.style.rotate = rot + 'deg';
+                            el.style.translate = offX + 'px ' + offY + 'px';
+                        }, delay);
+                        maxDelay = Math.max(maxDelay, delay);
+                    });
+
+                    setTimeout(() => {
+                        isAnimating = false;
+                        updateUI();
+                    }, maxDelay + 400);
+                }
+
+                if (cards.length > 1) {
+                    const extra = document.createElement('span');
+                    extra.className = 'extra-info';
+                    extra.textContent = `（共${cards.length}张，点击查看描述）`;
+                    setTimeout(() => {
+                        if (!lastDrawResult.querySelector('.extra-info')) {
+                            lastDrawResult.appendChild(extra);
+                        }
+                    }, 80 * Math.min(cards.length, 12) + 150);
+                }
+
+                updateRemainingIndicator();
+            }
+
+            function reshuffle() {
+                if (library.length === 0) return;
+                remainingCards = getTotalCount();
+                const indicator = document.getElementById('remaining-indicator');
+                let html = '';
+                if (indicator) html = indicator.outerHTML;
+                lastDrawResult.innerHTML = html || '';
+                ensureIndicator();
+                const span = document.createElement('span');
+                span.className = 'placeholder-text';
+                span.textContent = '已洗牌，共 ' + remainingCards + ' 张';
+                lastDrawResult.appendChild(span);
+                updateRemainingIndicator();
+                updateUI();
+            }
+
+            function exportLibrary() {
+                if (library.length === 0) {
+                    alert('牌库为空，无法导出。');
+                    return;
+                }
+                const cleanLibrary = library.map(item => ({
+                    name: item.name,
+                    count: item.count,
+                    image: item.image || '',
+                    desc: item.desc || ''
+                }));
+                const data = JSON.stringify(cleanLibrary, null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `library_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            function importLibrary(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (!Array.isArray(imported)) {
+                            throw new Error('文件格式错误：不是数组');
+                        }
+                        const normalized = imported.map((item, index) => {
+                            if (typeof item.name !== 'string' || !item.name.trim()) {
+                                throw new Error(`第 ${index+1} 条缺少有效的 "name" 字段`);
+                            }
+                            if (typeof item.count !== 'number' || item.count < 1) {
+                                throw new Error(`第 ${index+1} 条 "count" 必须为正整数`);
+                            }
+                            let image = null;
+                            if (item.image !== undefined && item.image !== null && item.image !== '') {
+                                if (typeof item.image !== 'string') {
+                                    throw new Error(`第 ${index+1} 条 "image" 类型错误`);
+                                }
+                                image = item.image;
+                            }
+                            let desc = '';
+                            if (item.desc !== undefined && item.desc !== null) {
+                                if (typeof item.desc !== 'string') {
+                                    throw new Error(`第 ${index+1} 条 "desc" 类型错误`);
+                                }
+                                desc = item.desc;
+                            }
+                            return { name: item.name.trim(), count: item.count, image, desc };
+                        });
+                        library = normalized;
+                        renderLibrary();
+                        clearStats();
+                        resetRemainingCards();
+                        alert(`✅ 导入 ${library.length} 种牌，共 ${getTotalCount()} 张。`);
+                    } catch (err) {
+                        alert('❌ 导入失败：' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // ---- 事件绑定 ----
+            addBtn.addEventListener('click', function() {
+                const name = cardNameInput.value.trim();
+                if (!name) { alert('请输入牌名'); return; }
+                const image = cardImageInput.value.trim() || null;
+                let count = parseInt(cardCountInput.value);
+                if (isNaN(count) || count < 1) count = 1;
+                const desc = cardDescInput.value.trim() || '';
+
+                const existing = library.find(item => item.name === name);
+                if (existing) {
+                    existing.count += count;
+                    if (image) existing.image = image;
+                    if (desc) existing.desc = desc;
+                } else {
+                    library.push({ name, count, image, desc });
+                }
+                renderLibrary();
+                clearStats();
+                resetRemainingCards();
+                cardNameInput.value = '';
+                cardImageInput.value = '';
+                cardDescInput.value = '';
+                cardNameInput.focus();
+            });
+
+            imageUpload.addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    cardImageInput.value = ev.target.result;
+                    const fileName = file.name.replace(/\.[^/.]+$/, "");
+                    if (cardNameInput.value.trim() === '' || cardNameInput.value === '火焰') {
+                        cardNameInput.value = fileName || '图片牌';
+                    }
+                };
+                reader.readAsDataURL(file);
+                this.value = '';
+            });
+
+            document.querySelectorAll('[data-preset]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const preset = this.dataset.preset;
+                    if (preset === 'clear') {
+                        library = [];
+                        renderLibrary();
+                        clearStats();
+                        resetRemainingCards();
+                        return;
+                    }
+                    let newLib = [];
+                    if (preset === 'poker') {
+                        const suits = ['♠', '♥', '♦', '♣'];
+                        const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
+                        for (const s of suits) {
+                            for (const r of ranks) {
+                                newLib.push({ name: s + r, count: 1, image: null, desc: '' });
+                            }
+                        }
+                        newLib.push({ name: '🃏小王', count: 1, image: null, desc: '小王' });
+                        newLib.push({ name: '🃏大王', count: 1, image: null, desc: '大王' });
+                    } else if (preset === 'mtg') {
+                        const lands = ['平原', '海岛', '沼泽', '山脉', '树林'];
+                        for (const l of lands) {
+                            newLib.push({ name: l, count: 10, image: null, desc: '万智牌基本地' });
+                        }
+                    } else if (preset === 'dnd') {
+                        for (let i = 1; i <= 20; i++) {
+                            newLib.push({ name: i.toString(), count: 1, image: null, desc: 'D20骰子面' });
+                        }
+                    }
+                    library = newLib;
+                    renderLibrary();
+                    clearStats();
+                    resetRemainingCards();
+                });
+            });
+
+            drawOneBtn.addEventListener('click', function() {
+                if (isAnimating) return;
+                const count = parseInt(drawCountInput.value) || 1;
+                const replace = replaceCheck.checked;
+                if (!replace && remainingCards <= 0) {
+                    alert('牌堆已空，请点击“洗牌”重置。');
+                    return;
+                }
+                const drawn = drawCards(count, replace);
+                if (drawn.length === 0) {
+                    showLastDraw([]);
+                    if (!replace) updateRemainingIndicator();
+                    return;
+                }
+                updateStats(drawn);
+                showLastDraw(drawn);
+                if (!replace) updateRemainingIndicator();
+            });
+
+            simBtn.addEventListener('click', function() {
+                if (isAnimating) return;
+                const perDraw = parseInt(drawCountInput.value) || 1;
+                const times = parseInt(simTimesInput.value) || 100;
+                if (times < 1) return;
+                const replace = replaceCheck.checked;
+                if (!replace && remainingCards <= 0) {
+                    alert('牌堆已空，请点击“洗牌”重置。');
+                    return;
+                }
+                let totalDrawn = [];
+                for (let i = 0; i < times; i++) {
+                    if (!replace && remainingCards <= 0) break;
+                    const drawn = drawCards(perDraw, replace);
+                    totalDrawn.push(...drawn);
+                    if (!replace && remainingCards <= 0) break;
+                }
+                if (totalDrawn.length === 0) {
+                    showLastDraw([]);
+                    if (!replace) updateRemainingIndicator();
+                    return;
+                }
+                updateStats(totalDrawn);
+                const display = totalDrawn.slice(0, 12);
+                showLastDraw(display);
+                if (totalDrawn.length > 12) {
+                    setTimeout(() => {
+                        const extra = document.createElement('span');
+                        extra.style.cssText = 'color:#94a3b8; font-size:12px; margin-left:4px;';
+                        extra.textContent = `… 等共${totalDrawn.length}张`;
+                        lastDrawResult.appendChild(extra);
+                    }, 80 * display.length + 150);
+                }
+                if (!replace) updateRemainingIndicator();
+            });
+
+            shuffleBtn.addEventListener('click', function() {
+                reshuffle();
+            });
+
+            cardNameInput.addEventListener('keypress', e => { if (e.key === 'Enter') addBtn.click(); });
+            cardImageInput.addEventListener('keypress', e => { if (e.key === 'Enter') addBtn.click(); });
+            cardCountInput.addEventListener('keypress', e => { if (e.key === 'Enter') addBtn.click(); });
+            cardDescInput.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault();
+                    addBtn.click(); } });
+
+            replaceCheck.addEventListener('change', function() {
+                drawModeBadge.textContent = this.checked ? '放回' : '不放回';
+                if (!this.checked) {
+                    resetRemainingCards();
+                } else {
+                    const indicator = document.getElementById('remaining-indicator');
+                    if (indicator) indicator.classList.add('hidden');
+                }
+                updateUI();
+            });
+
+            exportBtn.addEventListener('click', exportLibrary);
+            importFileInput.addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (!file) return;
+                importLibrary(file);
+                this.value = '';
+            });
+
+            statsTopNInput.addEventListener('change', function() {
+                renderStats();
+            });
+
+            // ============================================================
+            //  抛硬币
+            // ============================================================
+            const coinInner = document.getElementById('coin-inner');
+            const coinResult = document.getElementById('coin-result');
+            const coinHeads = document.getElementById('coin-heads');
+            const coinTails = document.getElementById('coin-tails');
+            const coinTotal = document.getElementById('coin-total');
+            const coinRate = document.getElementById('coin-rate');
+            const coinHistory = document.getElementById('coin-history');
+            const coinFlipBtn = document.getElementById('coin-flip-btn');
+            const coinResetBtn = document.getElementById('coin-reset-btn');
+            const coinBadge = document.getElementById('coin-badge');
+
+            let coinState = {
+                heads: 0,
+                tails: 0,
+                total: 0,
+                history: [],
+                isFlipping: false,
+                currentSide: 'heads'
+            };
+
+            function updateCoinUI() {
+                coinHeads.textContent = coinState.heads;
+                coinTails.textContent = coinState.tails;
+                coinTotal.textContent = coinState.total;
+                const rate = coinState.total > 0 ? (coinState.heads / coinState.total * 100) : 0;
+                coinRate.textContent = rate.toFixed(1) + '%';
+                coinBadge.textContent = coinState.total + ' 次';
+
+                coinHistory.innerHTML = '';
+                const maxHistory = 20;
+                const start = Math.max(0, coinState.history.length - maxHistory);
+                const display = coinState.history.slice(start);
+                for (const side of display) {
+                    const item = document.createElement('span');
+                    item.className = 'h-item ' + side;
+                    item.textContent = side === 'heads' ? '正' : '反';
+                    coinHistory.appendChild(item);
+                }
+                for (let i = display.length; i < maxHistory; i++) {
+                    const item = document.createElement('span');
+                    item.className = 'h-item empty';
+                    item.textContent = '·';
+                    coinHistory.appendChild(item);
+                }
+            }
+
+            function doCoinFlip() {
+                if (coinState.isFlipping) return;
+
+                coinState.isFlipping = true;
+                coinFlipBtn.disabled = true;
+                coinResult.textContent = '🔄 抛掷中...';
+
+                const result = rng.flipCoin() ? 'heads' : 'tails';
+
+                const baseRotations = 3 + Math.floor(rng.nextDouble() * 3);
+                const extraDeg = result === 'heads' ? 0 : 180;
+                const randomOffset = rng.nextDouble() * 20 - 10;
+                const totalRotation = baseRotations * 360 + extraDeg + randomOffset;
+
+                coinInner.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1)';
+                coinInner.style.transform = `rotateY(${totalRotation}deg)`;
+
+                setTimeout(() => {
+                    coinState.currentSide = result;
+                    if (result === 'heads') {
+                        coinState.heads++;
+                    } else {
+                        coinState.tails++;
+                    }
+                    coinState.total++;
+                    coinState.history.push(result);
+
+                    const exactRotation = result === 'heads' ?
+                        (Math.floor(totalRotation / 360) * 360) :
+                        (Math.floor(totalRotation / 360) * 360 + 180);
+                    coinInner.style.transition = 'none';
+                    coinInner.style.transform = `rotateY(${exactRotation}deg)`;
+                    setTimeout(() => {
+                        coinInner.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1)';
+                    }, 50);
+
+                    const emoji = result === 'heads' ? '🦅' : '🏛️';
+                    const label = result === 'heads' ? '正面' : '反面';
+                    coinResult.innerHTML = `🎉 结果是 <span class="highlight">${emoji} ${label}</span>！`;
+
+                    updateCoinUI();
+                    coinState.isFlipping = false;
+                    coinFlipBtn.disabled = false;
+                }, 850);
+            }
+
+            function resetCoin() {
+                if (coinState.isFlipping) return;
+                coinState.heads = 0;
+                coinState.tails = 0;
+                coinState.total = 0;
+                coinState.history = [];
+                coinState.currentSide = 'heads';
+                coinInner.style.transition = 'transform 0.5s ease';
+                coinInner.style.transform = 'rotateY(0deg)';
+                coinResult.textContent = '点击硬币或按钮';
+                updateCoinUI();
+                coinBadge.textContent = '0 次';
+            }
+
+            coinFlipBtn.addEventListener('click', doCoinFlip);
+            document.getElementById('coin-display').addEventListener('click', function(e) {
+                if (!coinState.isFlipping) {
+                    doCoinFlip();
+                }
+            });
+            coinResetBtn.addEventListener('click', resetCoin);
+            resetCoin();
+
+            // ============================================================
+            //  随机数生成器
+            // ============================================================
+            const randMinInput = document.getElementById('rand-min');
+            const randMaxInput = document.getElementById('rand-max');
+            const randCountInput = document.getElementById('rand-count');
+            const randAllowRepeat = document.getElementById('rand-allow-repeat');
+            const randSort = document.getElementById('rand-sort');
+            const randFormat = document.getElementById('rand-format');
+            const btnGenerate = document.getElementById('btn-generate');
+            const randResult = document.getElementById('rand-result');
+            const randTotal = document.getElementById('rand-total');
+            const randSum = document.getElementById('rand-sum');
+            const randAvg = document.getElementById('rand-avg');
+            const randMaxVal = document.getElementById('rand-max-val');
+            const randMinVal = document.getElementById('rand-min-val');
+
+            function generateRandomNumbers() {
+                const min = parseFloat(randMinInput.value);
+                const max = parseFloat(randMaxInput.value);
+                const count = parseInt(randCountInput.value);
+                const allowRepeat = randAllowRepeat.checked;
+                const sort = randSort.checked;
+                const format = randFormat.value;
+
+                if (isNaN(min) || isNaN(max) || isNaN(count) || count < 1) {
+                    alert('请填写有效的数字');
+                    return;
+                }
+                if (min > max) {
+                    alert('最小值不能大于最大值');
+                    return;
+                }
+                if (!allowRepeat && (max - min + 1) < count) {
+                    alert(`范围 [${min}, ${max}] 内最多只能生成 ${max - min + 1} 个不重复的数字`);
+                    return;
+                }
+
+                const result = [];
+                if (allowRepeat) {
+                    for (let i = 0; i < count; i++) {
+                        let num;
+                        if (format === 'float') {
+                            num = rng.nextFloat(min, max);
+                        } else {
+                            num = rng.nextInt(Math.ceil(min), Math.floor(max));
+                        }
+                        result.push(num);
+                    }
+                } else {
+                    const pool = [];
+                    for (let i = Math.ceil(min); i <= Math.floor(max); i++) pool.push(i);
+                    if (pool.length < count) {
+                        alert(`范围 [${Math.ceil(min)}, ${Math.floor(max)}] 内整数不足 ${count} 个`);
+                        return;
+                    }
+                    rng.shuffleArray(pool);
+                    for (let i = 0; i < count && i < pool.length; i++) {
+                        result.push(pool[i]);
+                    }
+                }
+
+                if (sort) {
+                    result.sort((a, b) => a - b);
+                }
+
+                const displayResult = result.map(v => {
+                    if (format === 'float') return v.toFixed(2);
+                    if (format === 'percent') return (v * 100).toFixed(1) + '%';
+                    return v.toString();
+                });
+
+                const sum = result.reduce((s, v) => s + v, 0);
+                const avg = result.length > 0 ? (sum / result.length) : 0;
+                const maxVal = result.length > 0 ? Math.max(...result) : '-';
+                const minVal = result.length > 0 ? Math.min(...result) : '-';
+
+                randTotal.textContent = result.length + ' 个';
+                randSum.textContent = format === 'float' ? sum.toFixed(2) : (format === 'percent' ? (sum * 100).toFixed(
+                    1) + '%' : sum);
+                randAvg.textContent = format === 'float' ? avg.toFixed(2) : (format === 'percent' ? (avg * 100).toFixed(
+                    1) + '%' : avg.toFixed(2));
+                randMaxVal.textContent = format === 'float' ? maxVal.toFixed(2) : (format === 'percent' ? (maxVal * 100)
+                    .toFixed(1) + '%' : maxVal);
+                randMinVal.textContent = format === 'float' ? minVal.toFixed(2) : (format === 'percent' ? (minVal * 100)
+                    .toFixed(1) + '%' : minVal);
+
+                randResult.innerHTML = '';
+                if (displayResult.length === 0) {
+                    randResult.innerHTML = '<span class="empty-text">没有生成任何数字</span>';
+                    return;
+                }
+                for (const num of displayResult) {
+                    const chip = document.createElement('span');
+                    chip.className = 'rand-chip';
+                    chip.textContent = num;
+                    randResult.appendChild(chip);
+                }
+            }
+
+            btnGenerate.addEventListener('click', generateRandomNumbers);
+            randResult.innerHTML = '<span class="empty-text">点击生成</span>';
+
+            // ============================================================
+            //  初始化
+            // ============================================================
+            function init() {
+                library = [
+                    { name: '⚡ 闪电', count: 3, image: null, desc: '雷电之力，造成3点伤害' },
+                    { name: '🔥 火球', count: 5, image: null, desc: '灼热的火球，造成5点伤害' },
+                    { name: '❄️ 冰霜', count: 2, image: null, desc: '冰霜新星，冻结敌人' },
+                    { name: '💀 死亡', count: 1, image: null, desc: '即死法术，无视防御' },
+                ];
+                renderLibrary();
+                clearStats();
+                resetRemainingCards();
+                ensureIndicator();
+                const placeholder = document.createElement('span');
+                placeholder.className = 'placeholder-text';
+                placeholder.textContent = '点击「抽」开始';
+                lastDrawResult.appendChild(placeholder);
+                updateUI();
+                resetCoin();
+            }
+            init();
+
+            window.__lib = library;
+            window.__stats = stats;
+            window.__rng = rng;
+        })();
+    </script>
+</body>
+</html>
